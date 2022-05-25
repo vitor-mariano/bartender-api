@@ -10,24 +10,20 @@ const db = new DynamoDB.DocumentClient();
 
 app.use(express.json());
 
-app.get(
-  "/orders",
-  async (_req, res) => {
-    try {
-      const orders = await db
-        .scan({
-          TableName: "orders",
-        })
-        .promise();
+app.get("/orders", authenticated, async (_req, res) => {
+  try {
+    const orders = await db
+      .scan({
+        TableName: "orders",
+      })
+      .promise();
 
-      res.json({ orders: orders.Items });
-    } catch (error: any) {
-      console.error(error);
-      res.status(500).json({ error: error.message });
-    }
-  },
-  authenticated
-);
+    res.json({ orders: orders.Items });
+  } catch (error: any) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 app.get("/orders/:orderId", async (req, res) => {
   const { orderId } = req.params;
@@ -50,49 +46,45 @@ app.get("/orders/:orderId", async (req, res) => {
   }
 });
 
-app.post(
-  "/orders/:orderId",
-  async (req, res) => {
-    const { orderId } = req.params;
+app.post("/orders/:orderId", authenticated, async (req, res) => {
+  const { orderId } = req.params;
 
-    const [body, validationError] = await goCatch(
-      Yup.object({
-        items: Yup.array(
-          Yup.object({
-            description: Yup.string().required(),
-            price: Yup.number().required(),
-            quantity: Yup.number().integer().required(),
-            delivered: Yup.boolean().required(),
-          })
-        ).required(),
-      }).validate(req.body)
-    );
-
-    if (validationError) {
-      return res.status(422).json({ error: validationError.message });
-    }
-
-    const payload = {
-      orderId,
-      items: body!.items,
-    };
-
-    try {
-      await db
-        .put({
-          TableName: process.env.ORDERS_TABLE!,
-          Item: payload,
+  const [body, validationError] = await goCatch(
+    Yup.object({
+      items: Yup.array(
+        Yup.object({
+          description: Yup.string().required(),
+          price: Yup.number().required(),
+          quantity: Yup.number().integer().required(),
+          delivered: Yup.boolean().required(),
         })
-        .promise();
+      ).required(),
+    }).validate(req.body)
+  );
 
-      res.json({ order: payload });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: `Error creating order ${orderId}` });
-    }
-  },
-  authenticated
-);
+  if (validationError) {
+    return res.status(422).json({ error: validationError.message });
+  }
+
+  const payload = {
+    orderId,
+    items: body!.items,
+  };
+
+  try {
+    await db
+      .put({
+        TableName: process.env.ORDERS_TABLE!,
+        Item: payload,
+      })
+      .promise();
+
+    res.json({ order: payload });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: `Error creating order ${orderId}` });
+  }
+});
 
 app.use((_req, res) => res.status(404).end());
 
