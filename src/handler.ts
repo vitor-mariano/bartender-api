@@ -10,6 +10,25 @@ const db = new DynamoDB.DocumentClient();
 
 app.use(express.json());
 
+app.get(
+  "/orders",
+  async (_req, res) => {
+    try {
+      const orders = await db
+        .scan({
+          TableName: "orders",
+        })
+        .promise();
+
+      res.json({ orders: orders.Items });
+    } catch (error: any) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
+    }
+  },
+  authenticated
+);
+
 app.get("/orders/:orderId", async (req, res) => {
   const { orderId } = req.params;
 
