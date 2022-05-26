@@ -5,6 +5,7 @@ import serverless from "serverless-http";
 import * as Yup from "yup";
 import { authenticated } from "./middlewares";
 
+const ORDERS_TABLE = process.env.ORDERS_TABLE!;
 const app = express();
 const db = new DynamoDB.DocumentClient();
 
@@ -14,7 +15,7 @@ app.get("/orders", authenticated, async (_req, res) => {
   try {
     const orders = await db
       .scan({
-        TableName: "orders",
+        TableName: ORDERS_TABLE,
       })
       .promise();
 
@@ -31,7 +32,7 @@ app.get("/orders/:orderId", async (req, res) => {
   try {
     const { Item: order } = await db
       .get({
-        TableName: process.env.ORDERS_TABLE!,
+        TableName: ORDERS_TABLE,
         Key: { orderId },
       })
       .promise();
@@ -74,7 +75,7 @@ app.post("/orders/:orderId", authenticated, async (req, res) => {
   try {
     await db
       .put({
-        TableName: process.env.ORDERS_TABLE!,
+        TableName: ORDERS_TABLE,
         Item: payload,
       })
       .promise();
