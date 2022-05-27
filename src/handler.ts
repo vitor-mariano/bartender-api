@@ -3,12 +3,14 @@ import express from "express";
 import { goCatch } from "go-catch";
 import serverless from "serverless-http";
 import * as Yup from "yup";
+import cors from "cors";
 import { authenticated } from "./middlewares";
 
 const ORDERS_TABLE = process.env.ORDERS_TABLE!;
 const app = express();
 const db = new DynamoDB.DocumentClient();
 
+app.use(cors());
 app.use(express.json());
 
 app.get("/orders", authenticated, async (_req, res) => {
