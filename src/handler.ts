@@ -58,15 +58,17 @@ app.post("/orders/:orderId", authenticated, async (req, res) => {
         Yup.object({
           description: Yup.string().required(),
           price: Yup.number().required(),
-          quantity: Yup.number().integer().required(),
+          quantity: Yup.number().required(),
           delivered: Yup.boolean().required(),
         })
       ).required(),
-    }).validate(req.body)
+    })
+      .required()
+      .validate(req.body)
   );
 
   if (validationError) {
-    return res.status(422).json({ error: validationError.message });
+    return res.status(422).json({ error: validationError.errors });
   }
 
   const payload = {
